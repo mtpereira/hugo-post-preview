@@ -16,21 +16,45 @@ type Screenshooter struct {
 	ctx      context.Context
 	cancel   context.CancelFunc
 	tasks    chromedp.Tasks
-	Timeout  time.Duration
-	SavePath string
+	timeout  time.Duration
+	savePath string
+	options  []chromedp.ContextOption
+}
+
+// Debug enables debug output on the Screenshooter.
+func Debug(enabled bool) func(*Screenshooter) {
+	return func(ss *Screenshooter) {
+		if enabled {
+			ss.options = append(ss.options, chromedp.WithDebugf(log.Printf))
+		}
+	}
+}
+
+// Timeout configures a timeout for taking screenshots.
+func Timeout(duration time.Duration) func(*Screenshooter) {
+	return func(ss *Screenshooter) {
+		ss.timeout = duration
+	}
+}
+
+// StoragePath defines the path where screenshot files will be stored.
+func StoragePath(path string) func(*Screenshooter) {
+	return func(ss *Screenshooter) {
+		ss.savePath = path
+	}
 }
 
 // New initializes and returns a Screenshooter.
 func New(config ...func(*Screenshooter)) *Screenshooter {
-	ctx, cancel := chromedp.NewContext(context.Background(), chromedp.WithDebugf(log.Printf))
-	ss := Screenshooter{
-		ctx:    ctx,
-		cancel: cancel,
-	}
+	var ss Screenshooter
 
 	for _, c := range config {
 		c(&ss)
 	}
+
+	ctx, cancel := chromedp.NewContext(context.Background(), ss.options...)
+	ss.ctx = ctx
+	ss.cancel = cancel
 
 	return &ss
 }
@@ -47,8 +71,8 @@ func elementScreenshot(urlstr, sel string, res *[]byte) chromedp.Tasks {
 // Take a screenshot of the given post.
 func (ss *Screenshooter) Take(postURL url.URL, element string, filename string) error {
 	defer ss.cancel()
-	if ss.Timeout > 0 {
-		ss.ctx, ss.cancel = context.WithTimeout(ss.ctx, ss.Timeout)
+	if ss.timeout > 0 {
+		ss.ctx, ss.cancel = context.WithTimeout(ss.ctx, ss.timeout)
 	}
 
 	var buf []byte
@@ -57,7 +81,7 @@ func (ss *Screenshooter) Take(postURL url.URL, element string, filename string) 
 		return err
 	}
 
-	err = ioutil.WriteFile(fmt.Sprintf("%s/%s.png", ss.SavePath, filename), buf, 0644)
+	err = ioutil.WriteFile(fmt.Sprintf("%s/%s.png", ss.savePath, filename), buf, 0644)
 	if err != nil {
 		return err
 	}

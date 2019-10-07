@@ -19,15 +19,8 @@ func main() {
 	postsPath := flag.String("postsPath", "post", "Path for the posts.")
 	timeout := flag.Duration("timeout", time.Duration(time.Second*10), "Time to wait before giving up on the request to the site. Disabled by setting a negative value.")
 	savePath := flag.String("savePath", ".", "Path for saving the taken screenshots.")
+	debug := flag.Bool("debug", false, "Enables debug information.")
 	flag.Parse()
-
-	timeoutConfig := func(ss *s.Screenshooter) {
-		ss.Timeout = *timeout
-	}
-
-	savePathConfig := func(ss *s.Screenshooter) {
-		ss.SavePath = *savePath
-	}
 
 	if *post == "" {
 		flag.PrintDefaults()
@@ -43,7 +36,7 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	ss := s.New(timeoutConfig, savePathConfig)
+	ss := s.New(s.Timeout(*timeout), s.StoragePath(*savePath), s.Debug(*debug))
 
 	err = ss.Take(*postURL, *element, *filename)
 	if err != nil {
