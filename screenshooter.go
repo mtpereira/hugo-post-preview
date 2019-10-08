@@ -2,8 +2,7 @@ package screenshooter
 
 import (
 	"context"
-	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/url"
 	"time"
@@ -13,12 +12,11 @@ import (
 
 // Screenshooter takes screenshots of given webpages.
 type Screenshooter struct {
-	ctx      context.Context
-	cancel   context.CancelFunc
-	tasks    chromedp.Tasks
-	timeout  time.Duration
-	savePath string
-	options  []chromedp.ContextOption
+	ctx     context.Context
+	cancel  context.CancelFunc
+	tasks   chromedp.Tasks
+	timeout time.Duration
+	options []chromedp.ContextOption
 }
 
 // Debug enables debug output on the Screenshooter.
@@ -34,13 +32,6 @@ func Debug(enabled bool) func(*Screenshooter) {
 func Timeout(duration time.Duration) func(*Screenshooter) {
 	return func(ss *Screenshooter) {
 		ss.timeout = duration
-	}
-}
-
-// StoragePath defines the path where screenshot files will be stored.
-func StoragePath(path string) func(*Screenshooter) {
-	return func(ss *Screenshooter) {
-		ss.savePath = path
 	}
 }
 
@@ -69,7 +60,7 @@ func elementScreenshot(urlstr, sel string, res *[]byte) chromedp.Tasks {
 }
 
 // Take a screenshot of the given post.
-func (ss *Screenshooter) Take(postURL url.URL, element string, filename string) error {
+func (ss *Screenshooter) Take(postURL url.URL, element string, w io.Writer) error {
 	defer ss.cancel()
 	if ss.timeout > 0 {
 		ss.ctx, ss.cancel = context.WithTimeout(ss.ctx, ss.timeout)
@@ -81,7 +72,7 @@ func (ss *Screenshooter) Take(postURL url.URL, element string, filename string) 
 		return err
 	}
 
-	err = ioutil.WriteFile(fmt.Sprintf("%s/%s.png", ss.savePath, filename), buf, 0644)
+	_, err = w.Write(buf)
 	if err != nil {
 		return err
 	}
