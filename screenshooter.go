@@ -1,4 +1,4 @@
-package screenshooter
+package screenshotter
 
 import (
 	"context"
@@ -10,8 +10,8 @@ import (
 	"github.com/chromedp/chromedp"
 )
 
-// Screenshooter takes screenshots of given webpages.
-type Screenshooter struct {
+// Screenshotter takes screenshots of given webpages.
+type Screenshotter struct {
 	ctx     context.Context
 	cancel  context.CancelFunc
 	tasks   chromedp.Tasks
@@ -20,8 +20,8 @@ type Screenshooter struct {
 }
 
 // Debug enables debug output on the Screenshooter.
-func Debug(enabled bool) func(*Screenshooter) {
-	return func(ss *Screenshooter) {
+func Debug(enabled bool) func(*Screenshotter) {
+	return func(ss *Screenshotter) {
 		if enabled {
 			ss.options = append(ss.options, chromedp.WithDebugf(log.Printf))
 		}
@@ -29,15 +29,15 @@ func Debug(enabled bool) func(*Screenshooter) {
 }
 
 // Timeout configures a timeout for taking screenshots.
-func Timeout(duration time.Duration) func(*Screenshooter) {
-	return func(ss *Screenshooter) {
+func Timeout(duration time.Duration) func(*Screenshotter) {
+	return func(ss *Screenshotter) {
 		ss.timeout = duration
 	}
 }
 
 // New initializes and returns a Screenshooter.
-func New(config ...func(*Screenshooter)) *Screenshooter {
-	var ss Screenshooter
+func New(config ...func(*Screenshotter)) *Screenshotter {
+	var ss Screenshotter
 
 	for _, c := range config {
 		c(&ss)
@@ -60,7 +60,7 @@ func elementScreenshot(urlstr, sel string, res *[]byte) chromedp.Tasks {
 }
 
 // Take a screenshot of the given post.
-func (ss *Screenshooter) Take(postURL url.URL, element string, w io.Writer) error {
+func (ss *Screenshotter) Take(postURL url.URL, element string, w io.Writer) error {
 	defer ss.cancel()
 	if ss.timeout > 0 {
 		ss.ctx, ss.cancel = context.WithTimeout(ss.ctx, ss.timeout)
