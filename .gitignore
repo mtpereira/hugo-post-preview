@@ -1,2 +1,2 @@
-hugo-post-screenshot
-*.png
+cmd/hugo-post-preview/hugo-post-preview
+**/*.png
