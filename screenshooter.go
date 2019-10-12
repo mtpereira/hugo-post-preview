@@ -16,15 +16,13 @@ type Screenshotter struct {
 	cancel  context.CancelFunc
 	tasks   chromedp.Tasks
 	timeout time.Duration
-	options []chromedp.ContextOption
+	debug   bool
 }
 
 // Debug enables debug output on the Screenshooter.
 func Debug(enabled bool) func(*Screenshotter) {
 	return func(ss *Screenshotter) {
-		if enabled {
-			ss.options = append(ss.options, chromedp.WithDebugf(log.Printf))
-		}
+		ss.debug = enabled
 	}
 }
 
@@ -43,11 +41,27 @@ func New(config ...func(*Screenshotter)) *Screenshotter {
 		c(&ss)
 	}
 
-	ctx, cancel := chromedp.NewContext(context.Background(), ss.options...)
+	options := buildOptions(&ss)
+	ctx, cancel := chromedp.NewContext(context.Background(), chromedp.WithBrowserOption(options...))
 	ss.ctx = ctx
 	ss.cancel = cancel
 
 	return &ss
+}
+
+func buildOptions(ss *Screenshotter) []chromedp.BrowserOption {
+	var options []chromedp.BrowserOption
+
+	switch {
+	case ss.debug:
+		o := chromedp.WithBrowserDebugf(log.Printf)
+		options = append(options, o)
+	case ss.timeout > 0:
+		o := chromedp.WithDialTimeout(ss.timeout)
+		options = append(options, o)
+	}
+
+	return options
 }
 
 // elementScreenshot takes a screenshot of a specific element.
@@ -62,9 +76,6 @@ func elementScreenshot(urlstr, sel string, res *[]byte) chromedp.Tasks {
 // Take a screenshot of the given post.
 func (ss *Screenshotter) Take(postURL url.URL, element string, w io.Writer) error {
 	defer ss.cancel()
-	if ss.timeout > 0 {
-		ss.ctx, ss.cancel = context.WithTimeout(ss.ctx, ss.timeout)
-	}
 
 	var buf []byte
 	err := chromedp.Run(ss.ctx, elementScreenshot(postURL.String(), element, &buf))
