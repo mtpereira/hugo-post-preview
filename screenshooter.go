@@ -49,6 +49,24 @@ func New(config ...func(*Screenshotter)) *Screenshotter {
 	return &ss
 }
 
+// Take a screenshot of the given post.
+func (ss *Screenshotter) Take(postURL url.URL, element string, w io.Writer) error {
+	defer ss.cancel()
+
+	var buf []byte
+	err := chromedp.Run(ss.ctx, elementScreenshot(postURL.String(), element, &buf))
+	if err != nil {
+		return err
+	}
+
+	_, err = w.Write(buf)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func buildOptions(ss *Screenshotter) []chromedp.BrowserOption {
 	var options []chromedp.BrowserOption
 
@@ -71,22 +89,4 @@ func elementScreenshot(urlstr, sel string, res *[]byte) chromedp.Tasks {
 		chromedp.WaitVisible(sel, chromedp.ByQuery),
 		chromedp.Screenshot(sel, res, chromedp.ByQuery),
 	}
-}
-
-// Take a screenshot of the given post.
-func (ss *Screenshotter) Take(postURL url.URL, element string, w io.Writer) error {
-	defer ss.cancel()
-
-	var buf []byte
-	err := chromedp.Run(ss.ctx, elementScreenshot(postURL.String(), element, &buf))
-	if err != nil {
-		return err
-	}
-
-	_, err = w.Write(buf)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
