@@ -10,7 +10,7 @@ import (
 	"github.com/chromedp/chromedp"
 )
 
-// Screenshotter takes screenshots of given webpages.
+// Screenshotter takes screenshots of given web pages.
 type Screenshotter struct {
 	ctx     context.Context
 	cancel  context.CancelFunc
@@ -19,7 +19,7 @@ type Screenshotter struct {
 	options []chromedp.ContextOption
 }
 
-// Debug enables debug output on the Screenshooter.
+// Debug enables debug output on the Screenshotter.
 func Debug(enabled bool) func(*Screenshotter) {
 	return func(ss *Screenshotter) {
 		if enabled {
@@ -35,7 +35,7 @@ func Timeout(duration time.Duration) func(*Screenshotter) {
 	}
 }
 
-// New initializes and returns a Screenshooter.
+// New initializes and returns a Screenshotter.
 func New(config ...func(*Screenshotter)) *Screenshotter {
 	var ss Screenshotter
 
@@ -51,9 +51,9 @@ func New(config ...func(*Screenshotter)) *Screenshotter {
 }
 
 // elementScreenshot takes a screenshot of a specific element.
-func elementScreenshot(urlstr, sel string, res *[]byte) chromedp.Tasks {
+func elementScreenshot(url, sel string, res *[]byte) chromedp.Tasks {
 	return chromedp.Tasks{
-		chromedp.Navigate(urlstr),
+		chromedp.Navigate(url),
 		chromedp.WaitVisible(sel, chromedp.ByQuery),
 		chromedp.Screenshot(sel, res, chromedp.ByQuery),
 	}
